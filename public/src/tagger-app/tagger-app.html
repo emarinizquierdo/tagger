@@ -1,0 +1,183 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-styles/color.html">
+<link rel="import" href="../../bower_components/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input.html">
+<link rel="import" href="../../bower_components/google-apis/google-js-api.html">
+
+<dom-module id="tagger-app">
+  <template>
+<custome-style>
+  <style is="custom-style" include="paper-material-styles">
+#container {
+  display: flex;
+}
+paper-button {
+  font-family: 'Roboto', 'Noto', sans-serif;
+  font-weight: normal;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+paper-button.pink {
+  color: var(--paper-pink-a200);
+  --paper-button-ink-color: var(--paper-pink-a200);
+}
+paper-button.pink:hover {
+  background-color: var(--paper-pink-100);
+}
+paper-button.indigo {
+  background-color: var(--paper-indigo-500);
+  color: white;
+  --paper-button-raised-keyboard-focus: {
+    background-color: var(--paper-pink-a200) !important;
+    color: white !important;
+  };
+}
+paper-button.indigo:hover {
+  background-color: var(--paper-indigo-400);
+}
+paper-button.green {
+  background-color: var(--paper-green-500);
+  color: white;
+}
+paper-button.green[active] {
+  background-color: var(--paper-red-500);
+}
+paper-button.disabled {
+  color: white;
+}
+</style>
+</custom-style>
+<app-toolbar>
+    <paper-icon-button icon="menu"></paper-icon-button>
+    <div main-title>Spork</div>
+    <paper-icon-button icon="search"></paper-icon-button>
+  </app-toolbar>
+<h2>Hello [[prop1]]</h2>
+    <google-js-api id="googleJsAPI" on-js-api-load="_onLoad"></google-js-api>
+
+    <template is="dom-if" if="{{!isSigned}}">
+    <paper-button raised class="button indigo" on-click="_handleAuthClick">Autenticarse</paper-button>
+  </template>
+  <template is="dom-if" if="{{isSigned}}">
+  <paper-button raised class="indigo" on-click="_handleSignoutClick">Desconectarse</paper-button>
+</template>
+  <paper-input always-float-label label="Floating label"></paper-input>
+  </template>
+
+  <script>
+    class MyApplication extends Polymer.Element {
+      static get is() {
+        return 'tagger-app';
+      }
+
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'tagger-app'
+          },
+          isSigned: {
+            type: Boolean,
+            value: false
+          }
+        };
+      }
+
+
+
+      _onLoad() {
+        gapi.load('client:auth2', this._initClient.bind(this));
+      }
+
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
+      _initClient() {
+        gapi.client.init({
+          discoveryDocs: DISCOVERY_DOCS,
+          clientId: CLIENT_ID,
+          scope: SCOPES
+        }).then(function() {
+          // Listen for sign-in state changes.
+          gapi.auth2.getAuthInstance().isSignedIn.listen(this._updateSigninStatus.bind(this));
+
+          // Handle the initial sign-in state.
+          this._updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+
+        }.bind(this));
+      }
+
+      /**
+       *  Called when the signed in status changes, to update the UI
+       *  appropriately. After a sign-in, the API is called.
+       */
+      _updateSigninStatus(isSignedIn) {
+        if (isSignedIn) {
+          this.isSigned = true;
+          this._callScriptFunction();
+        } else {
+          this.isSigned = false;
+        }
+      }
+
+      /**
+       *  Sign in the user upon button click.
+       */
+      _handleAuthClick(event) {
+        gapi.auth2.getAuthInstance().signIn();
+      }
+
+      /**
+       *  Sign out the user upon button click.
+       */
+      _handleSignoutClick(event) {
+        gapi.auth2.getAuthInstance().signOut();
+      }
+
+
+      /**
+       * Load the API and make an API call.  Display the results on the screen.
+       */
+      _callScriptFunction() {
+        var scriptId = "MZr-6pnGUMFrnzrLj7m45xLQ7U9HsbjSg";
+
+        // Call the Execution API run method
+        //   'scriptId' is the URL parameter that states what script to run
+        //   'resource' describes the run request body (with the function name
+        //              to execute)
+        gapi.client.script.scripts.run({
+          'scriptId': scriptId,
+          'resource': {
+            'function': 'onSearch',
+            'parameters': ['343']
+          }
+        }).then(function(resp) {
+          var result = resp.result;
+          if (result.error && result.error.status) {
+
+          } else if (result.error) {
+
+          } else {
+            debugger;
+
+
+ }
+        });
+      }
+
+    }
+
+    // Client ID and API key from the Developer Console
+    var CLIENT_ID = '81763242884-oc45tng552r59mrjnnvohfe3pndmrvhm.apps.googleusercontent.com';
+
+    // Array of API discovery doc URLs for APIs used by the quickstart
+    var DISCOVERY_DOCS = ["https://script.googleapis.com/$discovery/rest?version=v1"];
+
+    // Authorization scopes required by the API; multiple scopes can be
+    // included, separated by spaces.
+    var SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
+
+    window.customElements.define(MyApplication.is, MyApplication);
+  </script>
+</dom-module>

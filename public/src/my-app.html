@@ -1,0 +1,402 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/google-apis/google-js-api.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="my-icons.html">
+
+<link rel="lazy-import" href="my-view1.html">
+<link rel="lazy-import" href="my-view2.html">
+<link rel="lazy-import" href="my-view3.html">
+<link rel="lazy-import" href="my-view404.html">
+
+<dom-module id="my-app">
+  <template>
+    <style>
+      :host {
+        --app-primary-color: #4285f4;
+        --app-secondary-color: black;
+
+        display: block;
+      }
+
+      app-drawer-layout:not([narrow]) [drawer-toggle] {
+        display: none;
+      }
+
+      app-header {
+        color: #fff;
+        background-color: var(--app-primary-color);
+      }
+
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      .drawer-list {
+        margin: 0 20px;
+      }
+
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+        line-height: 40px;
+      }
+
+      .drawer-list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+
+      .key-line{
+
+            list-style-type: none;
+            padding: 0;
+      }
+
+      .key-line li{
+        padding: 0;
+        margin: 0;
+        display: inline-block;
+    width: 25%;
+    height: 40px;
+    color: blue;
+    background: red;
+      }
+
+      .numpad {
+        width: 100%;
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-flow: row wrap;
+            flex-flow: row wrap;
+            position: fixed;
+            bottom: 0;
+            cursor: pointer;
+      }
+
+      .button {
+        height: 60px;
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-align: center;
+            -ms-flex-align: center;
+                align-items: center;
+        -webkit-box-pack: center;
+            -ms-flex-pack: center;
+                justify-content: center;
+        -webkit-box-flex: 1;
+            -ms-flex: 1 0 33.3333%;
+                flex: 1 0 33.3333%;
+        background-color: #F9A03F;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+      .button:nth-of-type(11) {
+        -ms-flex-preferred-size: 66.6667%;
+            flex-basis: 66.6667%;
+      }
+      .button:hover {
+        background-color: #f89426;
+      }
+
+      .searchRef{
+        font-size: 21px;
+    color: #FF9800;
+      }
+
+      .clean{
+        font-size: 30px;
+    display: inline-block;
+    float: right;
+    padding: 5px 36px;
+    color: #FF5722;
+    font-weight: bold;
+    cursor: pointer;
+      }
+    </style>
+
+    <google-js-api id="googleJsAPI" on-js-api-load="_onLoad"></google-js-api>
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="[[rootPattern]]:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+
+    <app-drawer-layout fullbleed>
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header slot="header" condenses reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
+            <div main-title>Tagger</div>
+            <template is="dom-if" if="{{!isSigned}}">
+            <paper-button raised class="indigo" on-click="_handleAuthClick">Autenticarse</paper-button>
+            </template>
+  <template is="dom-if" if="{{isSigned}}">
+            <paper-button raised class="indigo" on-click="_handleSignoutClick">Desconectarse</paper-button>
+            </template>
+
+  </app-toolbar>
+  </app-header>
+
+  <div class="searchRef">{{searchId}}</div><span on-click="_clean" class="clean">x</span>
+
+  <template is="dom-repeat" items="{{result}}">
+    {{item}}
+  </template>
+  <div class="numpad">
+    <div class="button" on-click="_add0">0</div>
+    <div class="button" on-click="_add1">1</div>
+    <div class="button" on-click="_add2">2</div>
+    <div class="button" on-click="_add3">3</div>
+    <div class="button" on-click="_add4">4</div>
+    <div class="button" on-click="_add5">5</div>
+    <div class="button" on-click="_add6">6</div>
+    <div class="button" on-click="_add7">7</div>
+    <div class="button" on-click="_add8">8</div>
+    <div class="button" on-click="_add9">9</div>
+    <div class="button" on-click="_search">Buscar</div>
+  </div>
+
+
+  </app-header-layout>
+  </app-drawer-layout>
+  </template>
+
+  <script>
+    // Client ID and API key from the Developer Console
+    var CLIENT_ID = '81763242884-oc45tng552r59mrjnnvohfe3pndmrvhm.apps.googleusercontent.com';
+
+    // Array of API discovery doc URLs for APIs used by the quickstart
+    var DISCOVERY_DOCS = ["https://script.googleapis.com/$discovery/rest?version=v1"];
+
+    // Authorization scopes required by the API; multiple scopes can be
+    // included, separated by spaces.
+    var SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
+
+
+    class MyApp extends Polymer.Element {
+
+      static get is() {
+        return 'my-app';
+      }
+
+      static get properties() {
+        return {
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged',
+          },
+          rootPattern: String,
+          routeData: Object,
+          subroute: String,
+          isSigned: {
+            type: Boolean,
+            value: false
+          },
+          searchId : {
+            type: String,
+            value : ""
+          },
+          result : {
+            type: Array,
+            value: []
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.page)',
+        ];
+      }
+
+      constructor() {
+        super();
+
+        // Get root pattern for app-route, for more info about `rootPath` see:
+        // https://www.polymer-project.org/2.0/docs/upgrade#urls-in-templates
+        this.rootPattern = (new URL(this.rootPath)).pathname;
+      }
+
+      _routePageChanged(page) {
+        // Polymer 2.0 will call with `undefined` on initialization.
+        // Ignore until we are properly called with a string.
+        if (page === undefined) {
+          return;
+        }
+
+        // If no page was found in the route data, page will be an empty string.
+        // Deault to 'view1' in that case.
+        this.page = page || 'view1';
+
+      }
+
+      _pageChanged(page) {
+        // Load page import on demand. Show 404 page if fails
+        var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
+        Polymer.importHref(
+          resolvedPageUrl,
+          null,
+          this._showPage404.bind(this),
+          true);
+      }
+
+      _showPage404() {
+        this.page = 'view404';
+      }
+
+      _onLoad() {
+        gapi.load('client:auth2', this._initClient.bind(this));
+      }
+
+      _clean(){
+        this.searchId = "";
+        this.result = [];
+      }
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
+      _initClient() {
+        gapi.client.init({
+          discoveryDocs: DISCOVERY_DOCS,
+          clientId: CLIENT_ID,
+          scope: SCOPES
+        }).then(function() {
+          // Listen for sign-in state changes.
+          gapi.auth2.getAuthInstance().isSignedIn.listen(this._updateSigninStatus.bind(this));
+
+          // Handle the initial sign-in state.
+          this._updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+
+        }.bind(this));
+      }
+
+      /**
+       *  Called when the signed in status changes, to update the UI
+       *  appropriately. After a sign-in, the API is called.
+       */
+      _updateSigninStatus(isSignedIn) {
+        if (isSignedIn) {
+          this.isSigned = true;
+        } else {
+          this.isSigned = false;
+        }
+      }
+
+      /**
+       *  Sign in the user upon button click.
+       */
+      _handleAuthClick(event) {
+        gapi.auth2.getAuthInstance().signIn();
+      }
+
+      /**
+       *  Sign out the user upon button click.
+       */
+      _handleSignoutClick(event) {
+        gapi.auth2.getAuthInstance().signOut();
+      }
+
+      _search() {
+        if (this.isSigned) {
+
+          this._callScriptFunction(this.searchId);
+        }
+      }
+
+      /**
+       * Load the API and make an API call.  Display the results on the screen.
+       */
+      _callScriptFunction(_id) {
+        var scriptId = "MZr-6pnGUMFrnzrLj7m45xLQ7U9HsbjSg";
+
+        // Call the Execution API run method
+        //   'scriptId' is the URL parameter that states what script to run
+        //   'resource' describes the run request body (with the function name
+        //              to execute)
+        gapi.client.script.scripts.run({
+          'scriptId': scriptId,
+          'resource': {
+            'function': 'onSearch',
+            'parameters': [_id]
+          }
+        }).then(function(resp) {
+          var result = resp.result;
+          if (result.error && result.error.status) {
+
+          } else if (result.error) {
+
+          } else {
+            this.result = result.response.result[0];
+
+
+          }
+        }.bind(this));
+      }
+
+      _add0(){
+        this.searchId = this.searchId + "0";
+      }
+      _add1(){
+        this.searchId = this.searchId + "1";
+      }
+      _add2(){
+        this.searchId = this.searchId + "2";
+      }
+      _add3(){
+        this.searchId = this.searchId + "3";
+      }
+      _add4(){
+        this.searchId = this.searchId + "4";
+      }
+      _add5(){
+        this.searchId = this.searchId + "5";
+      }
+      _add6(){
+        this.searchId = this.searchId + "6";
+      }
+      _add7(){
+        this.searchId = this.searchId + "7";
+      }
+      _add8(){
+        this.searchId = this.searchId + "8";
+      }
+      _add9(){
+        this.searchId = this.searchId + "9";
+      }
+
+    }
+
+    window.customElements.define(MyApp.is, MyApp);
+  </script>
+</dom-module>
